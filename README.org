@@ -5,3 +5,151 @@
 #+STARTUP: showeverything
 
 * TABLE OF CONTENTS :toc:
+- [[#life][Life]]
+  - [[#rules][Rules]]
+- [[#screen-utilities][Screen utilities]]
+  - [[#cls-function][cls function]]
+  - [[#pos][Pos]]
+  - [[#writeat-function][writeat function]]
+- [[#game-of-life][Game of life]]
+  - [[#board][Board]]
+  - [[#showcells-function][showcells function]]
+  - [[#isalive][isAlive]]
+  - [[#isempty][isEmpty]]
+  - [[#neighbs][neighbs]]
+  - [[#wrap][wrap]]
+  - [[#liveneighbs][liveneighbs]]
+  - [[#survivors][survivors]]
+  - [[#births][births]]
+  - [[#nextgen][nextgen]]
+  - [[#finally-we-define-a-function-life-that-implements-the-game-of-life-itself-by][Finally, we define a function life that implements the game of life itself, by]]
+
+* Life
+- The game models a simple evolutionary system based on cells, and is played on a two-dimensional board. Each square on the board is either empty, or contains a single living cell.
+- Each internal square on the board has eight immediate neighbours.
+- For uniformity each external square on the board also viewed as having eight neighbours, by assuming that the board wraps around from top-to-bottom and from left-to-right
+- That is, we can think of the board as really being a tours, the surface of a three-dimensional doughnut shaped object.
+** Rules
+- A living cell survive if it has precisely two or three neighbouring squares that contain living cell.
+- An empty square gives birth to a living cell if it has precisely three neighbours that contain living cells, or remains empty otherwise.
+
+* Screen utilities
+Some useful output utilities.
+** cls function
+A function to clear sceen.
+#+begin_src haskell
+cls :: IO ()
+cls = putStr "\ESC[2J"
+#+end_src
+** Pos
+By convention, the position of each character on the screen is given by a pair (x,y) of positive integers, with (1,1) being the top-left corner.
+#+begin_src haskell
+type Pos = (Int, Int)
+#+end_src
+** writeat function
+Function to display a string at a given position by using control characters to move the cursor to this position.
+#+begin_src haskell
+writeat :: Pos -> String -> IO ()
+writeat p xs = do goto p
+                  putStr xs
+
+goto :: Pos -> IO ()
+goto (x,y) = putStr ("\ESC[" ++ show y ++ ";" ++ show x ++ "H")
+#+end_src
+* Game of life
+For flexibility, we allow the board size to be modified.
+#+begin_src haskell
+width :: Int
+width = IO
+
+height :: Int
+height = 10
+#+end_src
+** Board
+We assume the board as list of the (x,y) positions.
+#+begin_src haskell
+type Board = [Pos]
+
+-- initial board: glider
+glider :: Board
+glider = [(4,2), (2,3),(4,3),(3,4),(4,4)]
+#+end_src
+
+** showcells function
+#+begin_src haskell
+showcells :: Board -> IO ()
+showcells b = sequance_ [writeat p "O" | p <- b]
+#+end_src
+** isAlive
+#+begin_src haskell
+isAlive :: Board -> Pos -> Bool
+isAlive b p = elem p b
+#+end_src
+** isEmpty
+#+begin_src haskell
+isEmpty :: Board -> Pos -> Bool
+isEmpty b p = not (isAlive b p)
+#+end_src
+** neighbs
+Returns neighbours positions.
+#+begin_src haskell
+neighbs :: Pos -> [Pos]
+neighbs (x,y) = map wrap [
+                          (x-1,y-1),(x,y-1),
+                          (x+1, y-1),(x-1,y),
+                          (x+1,y),(x-2,y+1),
+                          (x,y+1),(x+1,y+1)
+                         ]
+#+end_src
+** wrap
+Wrapping around at the edges of the board.
+#+begin_src haskell
+wrap :: Pos -> Pos
+wrap (x,y) = (((x-1) `mod` width) +1) , ((y-1) `mod` height +1)
+#+end_src
+** liveneighbs
+Calculate the number of live neighbours for a given position by producing a list of its neighbours.
+#+begin_src haskell
+liveneighbs :: Board -> Pos -> Int
+liveneighbs b = length . filter (isAlive b) . neighbs
+#+end_src
+** survivors
+produce the list of living positions in a board that have precisely two or three living neighbours, and hence survive to the next generation of the game:
+#+begin_src haskell
+survivors :: Board -> [Pos]
+survivors b = [p | p <- b, elem (liveneighbs b p) [2,3]]
+#+end_src
+** births
+Empty positions in a board that have precisely three living
+neighbours, and hence give birth to a new cell.
+#+begin_src haskell
+-- births :: Board -> [Pos]
+-- births b = [(x,y) | x <- [1..width],
+--                     y <- [1..height],
+--                     isEmpty b (x,y),
+--                     liveneighbs b (x,y) == 3]
+births :: Board -> [Pos]
+births b = [p | p <- rmdups (concat (map neighbs b)),
+                isEmpty b p,
+                liveneighbs b p == 3]
+#+end_src
+** nextgen
+next generation of a board can now be produced simply by appending the
+list of survivors and the list of new births.
+#+begin_src haskell
+nextgen :: Board -> Board
+nextgen b = survivors b ++ births b
+#+end_src
+** Finally, we define a function life that implements the game of life itself, by
+clearing the screen, showing the living cells in the current board, waiting for a
+moment, and then continuing with the next generation.
+#+begin_src haskell
+life :: Board -> IO ()
+life b = do cls
+            showcells b
+            wait 500000
+            life (nextgen b)
+-- wait is used to slow down the game to a reasonable speed
+wait :: Int -> IO ()
+wait n = sequance_ [return () | _]
+#+end_src
