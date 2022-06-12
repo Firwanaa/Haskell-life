@@ -60,7 +60,7 @@ goto (x,y) = putStr ("\ESC[" ++ show y ++ ";" ++ show x ++ "H")
 For flexibility, we allow the board size to be modified.
 #+begin_src haskell
 width :: Int
-width = IO
+width = 10
 
 height :: Int
 height = 10

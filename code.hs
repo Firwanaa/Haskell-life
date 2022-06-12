@@ -11,7 +11,7 @@ goto :: Pos -> IO ()
 goto (x,y) = putStr ("\ESC[" ++ show y ++ ";" ++ show x ++ "H")
 
 width :: Int
-width = IO
+width = 10
 
 height :: Int
 height = 10
