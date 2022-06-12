@@ -1,0 +1,7 @@
+#+TITLE: Programming in Haskell - Graham Hutton - Ch10 - Game of Life
+#+AUTHOR: Firwanaa
+#+PROPERTY: header-args :tangle code.hs
+#+auto_tangle: t
+#+STARTUP: showeverything
+
+* TABLE OF CONTENTS :toc:
