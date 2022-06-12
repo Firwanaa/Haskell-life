@@ -68,4 +68,4 @@ life b = do cls
             life (nextgen b)
 -- wait is used to slow down the game to a reasonable speed
 wait :: Int -> IO ()
-wait n = sequance_ [return () | _]
+wait n = sequance_ [return () | _ <- [1..n]]
