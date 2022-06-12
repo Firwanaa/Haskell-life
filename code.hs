@@ -23,7 +23,7 @@ glider :: Board
 glider = [(4,2), (2,3),(4,3),(3,4),(4,4)]
 
 showcells :: Board -> IO ()
-showcells b = sequance_ [writeat p "O" | p <- b]
+showcells b = sequence_ [writeat p "O" | p <- b]
 
 isAlive :: Board -> Pos -> Bool
 isAlive b p = elem p b
@@ -40,7 +40,7 @@ neighbs (x,y) = map wrap [
                          ]
 
 wrap :: Pos -> Pos
-wrap (x,y) = (((x-1) `mod` width) +1) , ((y-1) `mod` height +1)
+wrap (x,y) = (((x-1) `mod` width) +1 , ((y-1) `mod` height) +1)
 
 liveneighbs :: Board -> Pos -> Int
 liveneighbs b = length . filter (isAlive b) . neighbs
@@ -57,6 +57,10 @@ births :: Board -> [Pos]
 births b = [p | p <- rmdups (concat (map neighbs b)),
                 isEmpty b p,
                 liveneighbs b p == 3]
+-- rmdups removes duplicates from a list,
+rmdups :: Eq a => [a] -> [a]
+rmdups [] = []
+rmdups (x:xs) = x : rmdups (filter (/= x) xs)
 
 nextgen :: Board -> Board
 nextgen b = survivors b ++ births b
@@ -68,4 +72,4 @@ life b = do cls
             life (nextgen b)
 -- wait is used to slow down the game to a reasonable speed
 wait :: Int -> IO ()
-wait n = sequance_ [return () | _ <- [1..n]]
+wait n = sequence_ [return () | _ <- [1..n]]
